@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>中芳堂 - Supabase 建表工具</title>
+<style>
+body { font-family: -apple-system, sans-serif; max-width: 700px; margin: 50px auto; padding: 20px; background: #f0fdf4; }
+.box { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+h1 { color: #16a34a; font-size: 22px; }
+input { width: 100%; padding: 10px; margin: 8px 0 16px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+button { width: 100%; padding: 14px; background: #16a34a; color: white; border: none; border-radius: 10px; font-size: 16px; cursor: pointer; }
+button:hover { background: #15803d; }
+button:disabled { background: #ccc; cursor: not-allowed; }
+pre { background: #f8f8f8; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 13px; margin-top: 16px; white-space: pre-wrap; }
+.result { margin-top: 16px; padding: 12px; border-radius: 8px; font-size: 14px; }
+.ok { background: #dcfce7; color: #15803d; }
+.err { background: #fee2e2; color: #dc2626; }
+</style>
+</head>
+<body>
+<div class="box">
+<h1>🌸 中芳堂 Supabase 建表工具</h1>
+<p style="color:#666;font-size:14px">输入你的数据库密码（创建 Supabase 项目时设置的那个），点击执行即可自动建表。</p>
+
+<input type="password" id="pwd" placeholder="数据库密码（创建项目时设置的）" />
+<button id="btn" onclick="run()">执行建表</button>
+
+<div id="result"></div>
+<pre id="log"></pre>
+</div>
+
+<script>
+const SQL = `CREATE EXTENSION IF NOT EXISTS vector;
+
+CREATE TABLE IF NOT EXISTS knowledge_base (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  category TEXT DEFAULT '通用',
+  embedding VECTOR(1536),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS conversations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT DEFAULT 'guest',
+  role TEXT NOT NULL,
+  content TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS douyin_videos (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT NOT NULL,
+  script TEXT,
+  status TEXT DEFAULT 'draft',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_knowledge_category ON knowledge_base(category);
+
+CREATE OR REPLACE FUNCTION match_knowledge(
+  query_embedding VECTOR(1536),
+  match_count INT DEFAULT 3
+)
+RETURNS TABLE (id UUID, title TEXT, content TEXT, category TEXT, similarity FLOAT)
+LANGUAGE plpgsql AS $$
+BEGIN
+  RETURN QUERY
+  SELECT kb.id, kb.title, kb.content, kb.category,
+    1 - (kb.embedding <=> query_embedding)
+  FROM knowledge_base kb
+  ORDER BY kb.embedding <=> query_embedding
+  LIMIT match_count;
+END; $$;`;
+
+async function run() {
+  const pwd = document.getElementById('pwd').value;
+  const btn = document.getElementById('btn');
+  const result = document.getElementById('result');
+  const log = document.getElementById('log');
+
+  if (!pwd) { alert('请输入数据库密码'); return; }
+  
+  btn.disabled = true;
+  btn.textContent = '执行中...';
+  result.innerHTML = '';
+  log.textContent = '';
+
+  // 尝试直连（通过浏览器 fetch 会被 CORS 限制，所以用 Supabase JS SDK）
+  // 改用: 通过 Supabase Management API
+
+  const projectRef = 'xccdckzwqupuhvsijmhw';
+  
+  // 方案: 用 supabase-js 直接操作
+  // 但建表需要 DDL，REST API 不支持
+  // 最终方案: 引导用户用 pgAdmin 或 Supabase SQL Editor
+
+  log.textContent = '正在尝试连接数据库...\n';
+
+  // 尝试用 fetch 调用 Supabase 的 query endpoint
+  try {
+    // 方法: 通过 Supabase 的 /pg/query 端点（如果存在）
+    // 或通过 psycopg2 在服务端执行
+
+    // 由于浏览器无法直连 PostgreSQL，我们提示用户
+    result.innerHTML = '<div class="err">⚠️ 浏览器无法直接连接数据库。</div>';
+    log.textContent = `
+请按以下步骤操作：
+
+1. 打开新标签页，访问：
+   https://supabase.com/dashboard/project/xccdckzwqupuhvsijmhw/sql/new
+
+2. 把下面 SQL 全部复制粘贴到输入框：
+
+${SQL}
+
+3. 点右下角绿色的 "Run" 按钮
+
+4. 看到 "Success" 就完成了！
+
+然后回到这里告诉我 "建好了"。
+`;
+  } catch(e) {
+    result.innerHTML = '<div class="err">错误: ' + e.message + '</div>';
+  }
+
+  btn.disabled = false;
+  btn.textContent = '执行建表';
+}
+</script>
+</body>
+</html>

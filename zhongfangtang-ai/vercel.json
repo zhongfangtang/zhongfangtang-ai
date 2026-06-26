@@ -1,0 +1,14 @@
+{
+  "build": {
+    "env": {
+      "SUPABASE_URL": "https://xccdckzwqupuhvsijmhw.supabase.co",
+      "SUPABASE_ANON_KEY": "sb_secret_eEVsaQynMQQHKJQZ0BS04Q_Bm_i23Yh",
+      "SUPABASE_SERVICE_ROLE_KEY": "sb_secret_eEVsaQynMQQHKJQZ0BS04Q_Bm_i23Yh",
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY": "sb_secret_eEVsaQynMQQHKJQZ0BS04Q_Bm_i23Yh",
+      "NEXT_PUBLIC_ADMIN_PASSWORD": "zhongfangtang2025",
+      "DEEPSEEK_API_KEY": "sk-048bc82c2ae8453da90970ef1ca275ce",
+      "DEEPSEEK_BASE_URL": "https://api.deepseek.com/v1",
+      "ADMIN_PASSWORD": "zhongfangtang2025"
+    }
+  }
+}

@@ -1,0 +1,7 @@
+node_modules/
+.next/
+.env
+.env.local
+.vercel
+*.log
+# .env.production 保留提交，用于 Vercel 部署
